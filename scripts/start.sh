@@ -25,26 +25,49 @@ try {
 }
 '
 
+# Retry rather than die on the first failure: a managed database can be briefly
+# unreachable while it restarts (a Supabase password reset does exactly this) or
+# while a scaled-to-zero instance wakes up. Without this, that transient window
+# crashloops the machine until Fly gives up, turning a 60-second blip into a
+# permanently down app. Roughly 2 minutes of retries total.
+retry() {
+  label="$1"
+  shift
+  delay=5
+  attempt=1
+  max_attempts=7
+  while :; do
+    if "$@"; then
+      return 0
+    else
+      # Must read $? inside the else branch: after `fi`, POSIX resets the
+      # status of a failed condition with no else-branch to 0.
+      status=$?
+    fi
+    if [ "${attempt}" -ge "${max_attempts}" ]; then
+      echo "[start] FATAL: ${label} failed after ${attempt} attempts (exit ${status})." >&2
+      return "${status}"
+    fi
+    echo "[start] ${label} failed (exit ${status}); retrying in ${delay}s (attempt ${attempt}/${max_attempts})..." >&2
+    sleep "${delay}"
+    attempt=$((attempt + 1))
+    delay=$((delay * 2))
+    if [ "${delay}" -gt 30 ]; then
+      delay=30
+    fi
+  done
+}
+
 echo "[start] Applying database migrations..."
-if node_modules/.bin/prisma migrate deploy; then
-  echo "[start] Migrations up to date."
-else
-  status=$?
-  echo "[start] FATAL: prisma migrate deploy failed (exit ${status})." >&2
-  exit "${status}"
-fi
+retry "prisma migrate deploy" node_modules/.bin/prisma migrate deploy
+echo "[start] Migrations up to date."
 
 # Idempotent: ensures the category/question framework exists and that there is
 # an admin account to log in with. Without this a freshly-migrated database has
 # no users at all, which locks everyone out of an otherwise healthy deploy.
 echo "[start] Bootstrapping framework data and admin user..."
-if node_modules/.bin/tsx prisma/bootstrap.ts; then
-  echo "[start] Bootstrap complete."
-else
-  status=$?
-  echo "[start] FATAL: bootstrap failed (exit ${status})." >&2
-  exit "${status}"
-fi
+retry "bootstrap" node_modules/.bin/tsx prisma/bootstrap.ts
+echo "[start] Bootstrap complete."
 
 echo "[start] Starting Next.js server on port ${PORT:-3000}..."
 exec node server.js
