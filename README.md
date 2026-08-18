@@ -66,15 +66,30 @@ Cambia estas contraseñas (o las variables `SEED_ADMIN_PASSWORD` /
 
 ```bash
 fly launch --no-deploy         # detecta el Dockerfile, crea la app y fly.toml
-fly postgres create            # o reutiliza un cluster existente
-fly postgres attach <nombre-del-cluster>   # define DATABASE_URL como secret automáticamente
+fly secrets set DATABASE_URL="postgresql://..."            # ver nota sobre Supabase abajo
 fly secrets set SESSION_SECRET="$(openssl rand -base64 32)"
 fly deploy
 ```
 
-`fly.toml` incluye `release_command = "npx prisma migrate deploy"`, así que cada
-`fly deploy` aplica las migraciones pendientes antes de sacar tráfico a la nueva
-versión. Para cargar los datos de ejemplo tras el primer deploy:
+Las migraciones se aplican al arrancar el contenedor, desde
+`scripts/start.sh`, que ejecuta `prisma migrate deploy` y solo entonces lanza el
+servidor. Deliberadamente **no** usamos el `release_command` de `fly.toml`: los
+logs de la máquina de release suelen no poder recuperarse ("timeout waiting for
+release command logs"), lo que convierte cualquier error de migración en un
+`exit code 1` sin causa visible. Ejecutándolas en el arranque, el error real de
+Prisma aparece en los logs de la app (`fly logs -a <app>` o el dashboard).
+
+### Base de datos con Supabase
+
+Usa la cadena del **Session pooler** (Project Settings → Database → Connection
+string), no la conexión directa: el host directo
+(`db.<ref>.supabase.co`) solo resuelve a IPv6, mientras que el pooler
+(`aws-0-<region>.pooler.supabase.com:5432`) resuelve a IPv4 y es el que Supabase
+recomienda para backends persistentes en redes IPv4. Ojo: en modo pooler el
+usuario es `postgres.<project-ref>`, no `postgres`. Si la contraseña lleva
+caracteres especiales, deben ir percent-encoded (`!` → `%21`).
+
+Para cargar los datos de ejemplo tras el primer deploy:
 
 ```bash
 fly ssh console -C "node_modules/.bin/tsx prisma/seed.ts"

@@ -8,8 +8,9 @@ primary_region = 'cdg'
 
 [build]
 
-[deploy]
-  release_command = 'npx prisma migrate deploy'
+# No [deploy] release_command on purpose: migrations run from the container
+# entrypoint (scripts/start.sh) instead, because release-command machine logs
+# are often unretrievable and turn a real migration error into a bare exit 1.
 
 [env]
   NODE_ENV = 'production'

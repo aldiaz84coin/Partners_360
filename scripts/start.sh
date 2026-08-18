@@ -1,0 +1,38 @@
+#!/bin/sh
+# Container entrypoint: apply pending migrations, then start the server.
+#
+# Migrations run here rather than in fly.toml's `release_command` on purpose:
+# the release-command machine's logs are frequently unretrievable ("timeout
+# waiting for release command logs"), which makes a failed migration look like
+# a bare "exit code 1" with no cause. Running them here puts the real Prisma
+# error in the app machine's logs, where `fly logs` and the dashboard show it.
+set -e
+
+# Echo the target host (never the password) so a misconfigured DATABASE_URL is
+# obvious from the logs alone.
+node -e '
+const raw = process.env.DATABASE_URL;
+if (!raw) {
+  console.error("[start] FATAL: DATABASE_URL is not set. Set it with `fly secrets set DATABASE_URL=...`.");
+  process.exit(1);
+}
+try {
+  const u = new URL(raw);
+  console.log(`[start] Database target: ${u.hostname}:${u.port || "5432"} user=${u.username} db=${u.pathname.slice(1)}`);
+} catch {
+  console.error("[start] FATAL: DATABASE_URL is not a valid URL. Special characters in the password must be percent-encoded.");
+  process.exit(1);
+}
+'
+
+echo "[start] Applying database migrations..."
+if node_modules/.bin/prisma migrate deploy; then
+  echo "[start] Migrations up to date."
+else
+  status=$?
+  echo "[start] FATAL: prisma migrate deploy failed (exit ${status})." >&2
+  exit "${status}"
+fi
+
+echo "[start] Starting Next.js server on port ${PORT:-3000}..."
+exec node server.js

@@ -37,7 +37,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/start.sh ./scripts/start.sh
+RUN chmod +x ./scripts/start.sh
 
 USER nextjs
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["./scripts/start.sh"]
