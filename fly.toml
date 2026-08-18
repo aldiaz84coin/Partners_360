@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for partners-360 on 2026-08-18T10:42:59Z
+# fly.toml app configuration file generated for partners-360 on 2026-08-18T11:15:20Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -7,10 +7,6 @@ app = 'partners-360'
 primary_region = 'cdg'
 
 [build]
-
-# No [deploy] release_command on purpose: migrations run from the container
-# entrypoint (scripts/start.sh) instead, because release-command machine logs
-# are often unretrievable and turn a real migration error into a bare exit 1.
 
 [env]
   NODE_ENV = 'production'

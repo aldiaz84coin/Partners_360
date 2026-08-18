@@ -22,6 +22,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs
 
+# Prisma's schema engine needs libssl to detect the OpenSSL version at runtime;
+# without it, it falls back to a guess and prints a warning on every run.
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl \
+  && rm -rf /var/lib/apt/lists/*
+
 # Next.js standalone server + static assets
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -30,8 +35,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # The standalone output above ships its own node_modules, pruned to only what
 # Next.js traced as imported by the server bundle — it does NOT include the
 # Prisma CLI (and its many transitive deps) needed by `prisma migrate deploy`
-# (fly.toml release_command) or `prisma db seed`. Replace it with the full,
-# known-good node_modules from the builder so both the app and the CLI work.
+# (run from scripts/start.sh at container startup) or `prisma db seed`.
+# Replace it with the full, known-good node_modules from the builder so both
+# the app and the CLI work.
 RUN rm -rf ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
