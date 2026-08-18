@@ -1,7 +1,7 @@
 # fly.toml — Partner 360°
 # Update `app` to your actual Fly app name (fly apps create / fly launch will set this).
 
-app = "partners360"
+app = "partners-360"
 primary_region = "mad"
 
 [build]
