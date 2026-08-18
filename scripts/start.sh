@@ -34,5 +34,17 @@ else
   exit "${status}"
 fi
 
+# Idempotent: ensures the category/question framework exists and that there is
+# an admin account to log in with. Without this a freshly-migrated database has
+# no users at all, which locks everyone out of an otherwise healthy deploy.
+echo "[start] Bootstrapping framework data and admin user..."
+if node_modules/.bin/tsx prisma/bootstrap.ts; then
+  echo "[start] Bootstrap complete."
+else
+  status=$?
+  echo "[start] FATAL: bootstrap failed (exit ${status})." >&2
+  exit "${status}"
+fi
+
 echo "[start] Starting Next.js server on port ${PORT:-3000}..."
 exec node server.js

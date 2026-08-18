@@ -68,35 +68,62 @@ Cambia estas contraseñas (o las variables `SEED_ADMIN_PASSWORD` /
 fly launch --no-deploy         # detecta el Dockerfile, crea la app y fly.toml
 fly secrets set DATABASE_URL="postgresql://..."            # ver nota sobre Supabase abajo
 fly secrets set SESSION_SECRET="$(openssl rand -base64 32)"
+fly secrets set ADMIN_EMAIL="tu@empresa.com" ADMIN_PASSWORD="..."   # admin inicial
 fly deploy
 ```
 
-Las migraciones se aplican al arrancar el contenedor, desde
-`scripts/start.sh`, que ejecuta `prisma migrate deploy` y solo entonces lanza el
-servidor. Deliberadamente **no** usamos el `release_command` de `fly.toml`: los
-logs de la máquina de release suelen no poder recuperarse ("timeout waiting for
-release command logs"), lo que convierte cualquier error de migración en un
-`exit code 1` sin causa visible. Ejecutándolas en el arranque, el error real de
-Prisma aparece en los logs de la app (`fly logs -a <app>` o el dashboard).
+### Qué ocurre en cada arranque
+
+`scripts/start.sh` es el entrypoint del contenedor y hace tres cosas antes de
+levantar el servidor:
+
+1. `prisma migrate deploy` — aplica las migraciones pendientes.
+2. `prisma/bootstrap.ts` — idempotente: crea las 5 categorías y las 39 preguntas
+   del marco si no existen, y crea **un** usuario administrador
+   (`ADMIN_EMAIL` / `ADMIN_PASSWORD`) la primera vez que no hay ninguno. Sin este
+   paso, una base recién migrada no tendría usuarios y nadie podría entrar. Si ya
+   existe un admin, no se toca su contraseña; si editas preguntas o pesos desde
+   `/admin`, tampoco se sobrescriben en el siguiente deploy.
+3. Arranca Next.js.
+
+Deliberadamente **no** usamos el `release_command` de `fly.toml`: los logs de la
+máquina de release suelen no poder recuperarse ("timeout waiting for release
+command logs"), lo que convierte cualquier error de migración en un `exit code 1`
+sin causa visible. En el arranque, el error real aparece en los logs de la app
+(`fly logs -a <app>` o el dashboard).
 
 ### Base de datos con Supabase
 
-Usa la cadena del **Session pooler** (Project Settings → Database → Connection
-string), no la conexión directa: el host directo
-(`db.<ref>.supabase.co`) solo resuelve a IPv6, mientras que el pooler
-(`aws-0-<region>.pooler.supabase.com:5432`) resuelve a IPv4 y es el que Supabase
-recomienda para backends persistentes en redes IPv4. Ojo: en modo pooler el
-usuario es `postgres.<project-ref>`, no `postgres`. Si la contraseña lleva
-caracteres especiales, deben ir percent-encoded (`!` → `%21`).
+Usa la **conexión directa** (Project Settings → Database → Connection string):
 
-Para cargar los datos de ejemplo tras el primer deploy:
+```
+postgresql://postgres:<PASSWORD>@db.<project-ref>.supabase.co:5432/postgres?sslmode=require
+```
+
+Ese host resuelve solo a IPv6, lo cual funciona sin problema desde Fly.io. El
+Session pooler (`aws-0-<region>.pooler.supabase.com`) es la alternativa para
+redes IPv4-only, pero exige acertar la región del pooler y usar
+`postgres.<project-ref>` como usuario; si te equivocas de shard obtendrás
+`FATAL: (ENOTFOUND) tenant/user ... not found`.
+
+Ojo con dos cosas que producen un `P1000: Authentication failed` poco obvio:
+
+- La contraseña de **base de datos** no es la de tu cuenta de Supabase. Si el
+  proyecto se creó por API, se generó una aleatoria: resetéala en
+  Project Settings → Database → *Reset database password*.
+- Si la contraseña lleva caracteres especiales, deben ir percent-encoded en la
+  URL (`!` → `%21`). Lo más simple es usar una alfanumérica.
+
+### Datos de demo (opcional)
+
+El bootstrap no crea partners ni evaluadores de ejemplo. Para cargarlos:
 
 ```bash
 fly ssh console -C "node_modules/.bin/tsx prisma/seed.ts"
 ```
 
-(o ejecuta ese seed solo si quieres los datos de demo; en producción normalmente
-crearás los partners, preguntas y usuarios reales desde `/admin`).
+En producción lo normal es crear los partners, stakeholders y periodos reales
+desde `/admin`.
 
 La app escala a 0 máquinas en reposo (`min_machines_running = 0` en `fly.toml`);
 súbelo a `1` si prefieres evitar el cold start del primer request tras inactividad.
