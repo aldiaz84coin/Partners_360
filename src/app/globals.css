@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+:root {
+  --page: #f9f9f7;
+  --surface: #ffffff;
+  --surface-2: #fcfcfb;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --border: rgba(11, 11, 11, 0.1);
+  --grid: #e1e0d9;
+
+  /* categorical (fixed order — never cycled) */
+  --series-1: #2a78d6; /* REL / PRO */
+  --series-2: #eb6834; /* PER / VEN */
+  --series-3: #1baf7a; /* BUS / PRE */
+  --series-4: #eda100; /* INN / DEL */
+  --series-5: #e87ba4; /* RSK / OPS */
+  --series-6: #008300; /* OWN */
+
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+
+  --brand: #184f95;
+  --brand-ink: #ffffff;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-brand: var(--brand);
+}
+
+body {
+  background: var(--page);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+.input {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  width: 100%;
+  font-size: 0.9rem;
+}
+.input:focus {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: opacity 0.15s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.btn:hover {
+  opacity: 0.88;
+}
+.btn-primary {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+.btn-danger {
+  background: var(--status-critical);
+  color: #fff;
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}

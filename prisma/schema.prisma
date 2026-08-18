@@ -1,0 +1,205 @@
+// Partner 360 — data model
+// See docs in README.md for the conceptual framework (ISO 44001 inspired).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+/// Access level inside the app itself (not the same as StakeholderRole below).
+enum SystemRole {
+  ADMIN // manages partners, questions, stakeholders, periods
+  VIEWER // read-only access to the KPI dashboard
+  EVALUATOR // answers assigned questionnaires
+}
+
+/// The six Partner 360 stakeholder perspectives.
+enum StakeholderRole {
+  PRO // Producto
+  VEN // Ventas
+  PRE // Ingeniería Preventa
+  DEL // Delivery
+  OPS // Operaciones / Soporte
+  OWN // Partner Owner
+}
+
+enum QuestionScope {
+  CORE // answered by (almost) every stakeholder
+  SPECIFIC // specific to one stakeholder role
+  STRATEGIC // forward-looking, answered by every stakeholder
+}
+
+enum PeriodStatus {
+  OPEN
+  CLOSED
+}
+
+enum EvaluationStatus {
+  DRAFT
+  SUBMITTED
+}
+
+// ---------------------------------------------------------------------------
+// Identity & access
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  name         String
+  systemRole   SystemRole @default(EVALUATOR)
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  assignments PartnerAssignment[]
+  evaluations Evaluation[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Partners & assignments
+// ---------------------------------------------------------------------------
+
+model Partner {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assignments PartnerAssignment[]
+  evaluations Evaluation[]
+
+  @@map("partners")
+}
+
+/// Who evaluates which partner, wearing which stakeholder hat.
+/// A single user can hold different roles for different partners.
+model PartnerAssignment {
+  id              String          @id @default(cuid())
+  partnerId       String
+  userId          String
+  stakeholderRole StakeholderRole
+  active          Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, userId, stakeholderRole])
+  @@map("partner_assignments")
+}
+
+// ---------------------------------------------------------------------------
+// Questionnaire structure
+// ---------------------------------------------------------------------------
+
+/// REL / PER / BUS / INN / RSK
+model Category {
+  id     String @id @default(cuid())
+  code   String @unique
+  name   String
+  weight Int // percentage weight in the overall score, all categories sum to 100
+  order  Int    @default(0)
+
+  questions Question[]
+
+  @@map("categories")
+}
+
+model Question {
+  id         String        @id @default(cuid())
+  code       String        @unique
+  text       String
+  categoryId String
+  scope      QuestionScope
+  active     Boolean       @default(true)
+  order      Int           @default(0)
+
+  category  Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  audiences QuestionAudience[]
+  answers   Answer[]
+
+  @@map("questions")
+}
+
+/// Which stakeholder roles answer a given question (the ●/○ matrix).
+/// required = false marks a secondary/optional question for that role.
+model QuestionAudience {
+  id              String          @id @default(cuid())
+  questionId      String
+  stakeholderRole StakeholderRole
+  required        Boolean         @default(true)
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, stakeholderRole])
+  @@map("question_audiences")
+}
+
+// ---------------------------------------------------------------------------
+// Evaluation periods & responses
+// ---------------------------------------------------------------------------
+
+model Period {
+  id        String       @id @default(cuid())
+  label     String       @unique // e.g. "2026-Q1"
+  startDate DateTime
+  endDate   DateTime
+  status    PeriodStatus @default(OPEN)
+  createdAt DateTime     @default(now())
+
+  evaluations Evaluation[]
+
+  @@map("periods")
+}
+
+/// One evaluator's response set for one partner, in one period, wearing one stakeholder hat.
+model Evaluation {
+  id              String            @id @default(cuid())
+  partnerId       String
+  periodId        String
+  userId          String
+  stakeholderRole StakeholderRole
+  status          EvaluationStatus  @default(DRAFT)
+  comment         String?
+  submittedAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  period  Period  @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers Answer[]
+
+  @@unique([partnerId, periodId, userId, stakeholderRole])
+  @@map("evaluations")
+}
+
+/// value: 1-5 scale answer. Null + isNA=true means "N/A - no tengo suficiente información".
+model Answer {
+  id           String   @id @default(cuid())
+  evaluationId String
+  questionId   String
+  value        Int?
+  isNA         Boolean  @default(false)
+  updatedAt    DateTime @updatedAt
+
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([evaluationId, questionId])
+  @@map("answers")
+}
