@@ -97,8 +97,16 @@ sin causa visible. En el arranque, el error real aparece en los logs de la app
 Usa la **conexión directa** (Project Settings → Database → Connection string):
 
 ```
-postgresql://postgres:<PASSWORD>@db.<project-ref>.supabase.co:5432/postgres?sslmode=require
+postgresql://postgres:<PASSWORD>@db.<project-ref>.supabase.co:5432/postgres?sslmode=no-verify
 ```
+
+Importante: `sslmode=no-verify`, no `require`. Desde `pg` 8.16 (el driver que usa
+`@prisma/adapter-pg`), `sslmode=require` pasó a exigir verificación completa de
+la cadena de certificados — y el certificado de Supabase no valida contra la CA
+por defecto de Node, así que cualquier consulta (no las migraciones, que usan el
+motor de Prisma y no este driver) falla con
+`Error opening a TLS connection: self-signed certificate in certificate chain`.
+`no-verify` sigue cifrando la conexión, solo que no valida la cadena.
 
 Ese host resuelve solo a IPv6, lo cual funciona sin problema desde Fly.io. El
 Session pooler (`aws-0-<region>.pooler.supabase.com`) es la alternativa para
