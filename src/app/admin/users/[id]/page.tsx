@@ -18,7 +18,14 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 
       <Card className="mb-6">
         <h2 className="font-medium text-text-primary mb-3">Datos de usuario</h2>
-        <EditUserForm userId={user.id} name={user.name} systemRole={user.systemRole} />
+        <EditUserForm
+          userId={user.id}
+          name={user.name}
+          phone={user.phone ?? ""}
+          systemRole={user.systemRole}
+          stakeholderRole={user.stakeholderRole ?? ""}
+          isEvaluator={user.isEvaluator}
+        />
       </Card>
 
       <Card className="mb-6">

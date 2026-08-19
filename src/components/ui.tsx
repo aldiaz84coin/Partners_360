@@ -4,7 +4,15 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
   return <div className={`card p-5 ${className}`}>{children}</div>;
 }
 
-export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+}: {
+  title: ReactNode;
+  subtitle?: string;
+  actions?: ReactNode;
+}) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
       <div>
