@@ -1,7 +1,7 @@
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
-import { ALL_ROLES, CATEGORIES, ALL_QUESTIONS, type Role } from "./framework-data";
+import { ALL_ROLES, CATEGORIES, ALL_QUESTIONS, DEFAULT_TECHNOLOGIES, type Role } from "./framework-data";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -30,8 +30,32 @@ const DEMO_USERS: { email: string; name: string; role: Role }[] = [
 ];
 
 const DEMO_PARTNERS = [
-  { key: "technova", name: "TechNova Solutions", description: "Partner tecnológico estratégico — infraestructura cloud y datos." },
-  { key: "cloudbridge", name: "CloudBridge Systems", description: "Partner de integración y soporte operativo." },
+  {
+    key: "technova",
+    name: "TechNova Solutions",
+    description: "Partner tecnológico estratégico — infraestructura cloud y datos.",
+    category: "ESTRATEGICO" as const,
+    techAreas: ["AUTOMATIZACION", "DIGITALIZACION"] as const,
+    technologies: ["Cloud / Infraestructura", "Data & Analytics", "IA / Machine Learning"],
+    partnershipStartDate: new Date("2023-01-15"),
+    agreementValidUntil: new Date("2026-12-31"),
+    contactName: "Marta Sánchez",
+    contactEmail: "marta.sanchez@technova.example",
+    contactPhone: "+34 600 111 222",
+  },
+  {
+    key: "cloudbridge",
+    name: "CloudBridge Systems",
+    description: "Partner de integración y soporte operativo.",
+    category: "ESTANDAR" as const,
+    techAreas: ["DIGITALIZACION"] as const,
+    technologies: ["iPaaS / Integración", "ERP / CRM"],
+    partnershipStartDate: new Date("2024-06-01"),
+    agreementValidUntil: null,
+    contactName: "Jorge Ibáñez",
+    contactEmail: "jorge.ibanez@cloudbridge.example",
+    contactPhone: "+34 600 333 444",
+  },
 ] as const;
 
 // Baseline 1-5 score per category, used to synthesize a realistic-looking closed period.
@@ -82,6 +106,18 @@ async function main() {
     }
   }
 
+  console.log("Seeding technology catalog...");
+  const technologyByName = new Map<string, string>();
+  for (let i = 0; i < DEFAULT_TECHNOLOGIES.length; i++) {
+    const name = DEFAULT_TECHNOLOGIES[i];
+    const tech = await prisma.technology.upsert({
+      where: { name },
+      update: {},
+      create: { name, order: i },
+    });
+    technologyByName.set(name, tech.id);
+  }
+
   console.log("Seeding users...");
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "Admin123!";
   const demoPassword = process.env.SEED_DEMO_PASSWORD ?? "Partner123!";
@@ -126,8 +162,25 @@ async function main() {
   console.log("Seeding partners & assignments...");
   const partnerByKey = new Map<string, string>();
   for (const p of DEMO_PARTNERS) {
+    const technologyIds = p.technologies.map((name) => ({ id: technologyByName.get(name)! }));
+    const base = {
+      name: p.name,
+      description: p.description,
+      category: p.category,
+      techAreas: [...p.techAreas],
+      partnershipStartDate: p.partnershipStartDate,
+      agreementValidUntil: p.agreementValidUntil,
+      contactName: p.contactName,
+      contactEmail: p.contactEmail,
+      contactPhone: p.contactPhone,
+    };
     const existing = await prisma.partner.findFirst({ where: { name: p.name } });
-    const partner = existing ?? (await prisma.partner.create({ data: { name: p.name, description: p.description } }));
+    const partner = existing
+      ? await prisma.partner.update({
+          where: { id: existing.id },
+          data: { ...base, technologies: { set: technologyIds } },
+        })
+      : await prisma.partner.create({ data: { ...base, technologies: { connect: technologyIds } } });
     partnerByKey.set(p.key, partner.id);
 
     for (const role of ALL_ROLES) {

@@ -2,7 +2,17 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 import { togglePartnerActiveAction } from "@/lib/actions/partners";
-import { NewPartnerForm } from "./new-partner-form";
+
+const CATEGORY_LABEL: Record<string, string> = {
+  ESTRATEGICO: "Estratégico",
+  ESTANDAR: "Estándar",
+  NUEVO: "Nuevo",
+};
+
+const TECH_AREA_LABEL: Record<string, string> = {
+  AUTOMATIZACION: "Automatización",
+  DIGITALIZACION: "Digitalización",
+};
 
 export default async function AdminPartnersPage() {
   const partners = await prisma.partner.findMany({
@@ -12,12 +22,15 @@ export default async function AdminPartnersPage() {
 
   return (
     <>
-      <PageHeader title="Partners" subtitle="Empresas partner evaluadas en el marco Partner 360°." />
-
-      <Card className="mb-6">
-        <h2 className="font-medium text-text-primary mb-3">Nuevo partner</h2>
-        <NewPartnerForm />
-      </Card>
+      <PageHeader
+        title="Partners"
+        subtitle="Empresas partner evaluadas en el marco Partner 360°."
+        actions={
+          <Link href="/admin/partners/new" className="btn btn-primary text-sm">
+            Nuevo partner
+          </Link>
+        }
+      />
 
       <Card>
         {partners.length === 0 ? (
@@ -27,17 +40,21 @@ export default async function AdminPartnersPage() {
             {partners.map((p) => (
               <li key={p.id} className="py-3 flex items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Link href={`/admin/partners/${p.id}`} className="font-medium text-text-primary hover:underline">
                       {p.name}
                     </Link>
+                    <Badge>{CATEGORY_LABEL[p.category]}</Badge>
+                    {p.techAreas.map((a) => (
+                      <Badge key={a}>{TECH_AREA_LABEL[a]}</Badge>
+                    ))}
                     {!p.active && <Badge>Archivado</Badge>}
                   </div>
                   <div className="text-xs text-text-muted mt-0.5">
                     {p.description || "Sin descripción"} · {p._count.assignments} evaluadores asignados
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <Link href={`/admin/partners/${p.id}`} className="btn btn-secondary text-sm">
                     Gestionar
                   </Link>
