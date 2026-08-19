@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { BarChart3, Route } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { PageHeader, Card, ScoreBadge, EmptyState } from "@/components/ui";
+import { PageHeader, Card, Badge, ScoreBadge, EmptyState } from "@/components/ui";
 import { getAllPartnersSummary, averageOf, getCategoryWeights } from "@/lib/dashboard-data";
 import { PeriodSelect } from "./period-select";
 
@@ -13,7 +14,20 @@ export default async function DashboardPage({
   if (periods.length === 0) {
     return (
       <>
-        <PageHeader title="Dashboard Partner 360°" />
+        <div className="mb-2">
+          <Badge tone="brand">
+            <Route className="h-3.5 w-3.5" aria-hidden />
+            Itinerario de Automatización y Digitalización
+          </Badge>
+        </div>
+        <PageHeader
+          title={
+            <span className="inline-flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" style={{ color: "var(--brand)" }} aria-hidden />
+              Dashboard Partner 360°
+            </span>
+          }
+        />
         <Card>
           <EmptyState>Todavía no hay periodos de evaluación creados. Crea uno desde Administración.</EmptyState>
         </Card>
@@ -36,8 +50,19 @@ export default async function DashboardPage({
 
   return (
     <>
+      <div className="mb-2">
+        <Badge tone="brand">
+          <Route className="h-3.5 w-3.5" aria-hidden />
+          Itinerario de Automatización y Digitalización
+        </Badge>
+      </div>
       <PageHeader
-        title="Dashboard Partner 360°"
+        title={
+          <span className="inline-flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" style={{ color: "var(--brand)" }} aria-hidden />
+            Dashboard Partner 360°
+          </span>
+        }
         subtitle="Visión agregada de la relación con partners, por periodo."
         actions={<PeriodSelect periods={periods} selectedId={selectedPeriod.id} />}
       />

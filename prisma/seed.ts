@@ -154,6 +154,8 @@ async function main() {
         name: u.name,
         passwordHash: await bcrypt.hash(demoPassword, 12),
         systemRole: "EVALUATOR",
+        stakeholderRole: u.role,
+        isEvaluator: true,
       },
     });
     usersByRole.set(u.role, user.id);

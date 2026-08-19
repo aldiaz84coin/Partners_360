@@ -1,3 +1,4 @@
+import { Route } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AppNav } from "@/components/nav";
@@ -93,7 +94,10 @@ export default async function MetodologiaPage() {
       <AppNav user={user} />
       <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-10 flex-1">
         <div className="mb-2">
-          <Badge tone="brand">Itinerario de Automatización y Digitalización</Badge>
+          <Badge tone="brand">
+            <Route className="h-3.5 w-3.5" aria-hidden />
+            Itinerario de Automatización y Digitalización
+          </Badge>
         </div>
         <PageHeader
           title="Metodología Partner 360°"

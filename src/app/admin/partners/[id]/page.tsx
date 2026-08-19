@@ -32,9 +32,9 @@ export default async function AdminPartnerDetailPage({ params }: { params: Promi
   ];
 
   const users = await prisma.user.findMany({
-    where: { active: true, systemRole: "EVALUATOR" },
+    where: { active: true, systemRole: "EVALUATOR", isEvaluator: true },
     orderBy: { name: "asc" },
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, stakeholderRole: true },
   });
 
   return (

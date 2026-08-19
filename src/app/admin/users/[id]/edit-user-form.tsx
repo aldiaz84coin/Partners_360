@@ -4,9 +4,33 @@ import { useActionState } from "react";
 import { updateUserAction, resetUserPasswordAction } from "@/lib/actions/users";
 import type { FormState } from "@/lib/actions/partners";
 
+const STAKEHOLDER_OPTIONS = [
+  { value: "", label: "Ninguno" },
+  { value: "PRO", label: "Producto" },
+  { value: "VEN", label: "Ventas" },
+  { value: "PRE", label: "Ingeniería Preventa" },
+  { value: "DEL", label: "Delivery" },
+  { value: "OPS", label: "Operaciones / Soporte" },
+  { value: "OWN", label: "Partner Owner" },
+];
+
 const initialState: FormState = {};
 
-export function EditUserForm({ userId, name, systemRole }: { userId: string; name: string; systemRole: string }) {
+export function EditUserForm({
+  userId,
+  name,
+  phone,
+  systemRole,
+  stakeholderRole,
+  isEvaluator,
+}: {
+  userId: string;
+  name: string;
+  phone: string;
+  systemRole: string;
+  stakeholderRole: string;
+  isEvaluator: boolean;
+}) {
   const action = updateUserAction.bind(null, userId);
   const [state, formAction, pending] = useActionState(action, initialState);
 
@@ -17,6 +41,10 @@ export function EditUserForm({ userId, name, systemRole }: { userId: string; nam
         <input name="name" defaultValue={name} required className="input" />
       </div>
       <div>
+        <label className="block text-sm font-medium text-text-secondary mb-1">Teléfono</label>
+        <input name="phone" defaultValue={phone} className="input" />
+      </div>
+      <div>
         <label className="block text-sm font-medium text-text-secondary mb-1">Nivel de acceso</label>
         <select name="systemRole" defaultValue={systemRole} className="input">
           <option value="EVALUATOR">Evaluador</option>
@@ -24,6 +52,20 @@ export function EditUserForm({ userId, name, systemRole }: { userId: string; nam
           <option value="ADMIN">Administrador</option>
         </select>
       </div>
+      <div>
+        <label className="block text-sm font-medium text-text-secondary mb-1">Grupo de stakeholder</label>
+        <select name="stakeholderRole" defaultValue={stakeholderRole} className="input">
+          {STAKEHOLDER_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <label className="flex items-center gap-1.5 text-sm text-text-secondary">
+        <input type="checkbox" name="isEvaluator" defaultChecked={isEvaluator} />
+        Es evaluador (recibe encuestas para su grupo)
+      </label>
       {state.error && <p className="text-sm text-[var(--status-critical)]">{state.error}</p>}
       {state.success && <p className="text-sm text-[var(--status-good)]">Guardado.</p>}
       <button type="submit" disabled={pending} className="btn btn-primary w-fit">

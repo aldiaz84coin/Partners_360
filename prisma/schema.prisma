@@ -68,10 +68,18 @@ model User {
   email        String     @unique
   passwordHash String
   name         String
+  phone        String?
   systemRole   SystemRole @default(EVALUATOR)
   active       Boolean    @default(true)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+
+  // Grupo de stakeholder al que pertenece esta persona (Producto, Ventas...),
+  // independiente de a qué partners concretos se le asigne evaluar.
+  stakeholderRole StakeholderRole?
+  // Si es false, esta persona es un contacto de referencia dentro de su grupo
+  // de stakeholder pero no debe recibir cuestionarios de evaluación.
+  isEvaluator     Boolean          @default(true)
 
   assignments PartnerAssignment[]
   evaluations Evaluation[]
