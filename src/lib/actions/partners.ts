@@ -86,6 +86,12 @@ export async function togglePartnerActiveAction(partnerId: string, active: boole
   revalidatePath("/admin/partners");
 }
 
+export async function deletePartnerAction(partnerId: string) {
+  await requireUser(["ADMIN"]);
+  await prisma.partner.delete({ where: { id: partnerId } });
+  revalidatePath("/admin/partners");
+}
+
 const assignmentSchema = z.object({
   userId: z.string().min(1),
   stakeholderRole: z.enum(["PRO", "VEN", "PRE", "DEL", "OPS", "OWN"]),
