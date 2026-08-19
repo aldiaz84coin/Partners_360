@@ -14,14 +14,15 @@ export function AppNav({ user }: { user: NavUser }) {
   const links = [
     { href: "/dashboard", label: "Dashboard", show: user.systemRole === "ADMIN" || user.systemRole === "VIEWER" },
     { href: "/evaluate", label: "Mis evaluaciones", show: true },
+    { href: "/metodologia", label: "Metodología", show: true },
     { href: "/admin", label: "Administración", show: user.systemRole === "ADMIN" },
   ].filter((l) => l.show);
 
   return (
     <header className="border-b border-[var(--border)] bg-surface sticky top-0 z-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="font-semibold text-text-primary tracking-tight">
+        <div className="flex items-center gap-6 min-w-0">
+          <Link href="/" className="font-semibold text-text-primary tracking-tight shrink-0">
             Partner 360°
           </Link>
           <nav className="hidden sm:flex items-center gap-1">

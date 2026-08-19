@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const COOKIE_NAME = "p360_session";
-const PROTECTED_PREFIXES = ["/admin", "/dashboard", "/evaluate", "/account"];
+const PROTECTED_PREFIXES = ["/admin", "/dashboard", "/evaluate", "/account", "/metodologia"];
 
 // Lightweight cookie-presence gate. Fine-grained role checks (which need a DB
 // lookup) happen in the server layouts, since Prisma's node-postgres adapter
@@ -24,5 +24,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*", "/evaluate/:path*", "/account/:path*"],
+  matcher: ["/admin/:path*", "/dashboard/:path*", "/evaluate/:path*", "/account/:path*", "/metodologia/:path*"],
 };
