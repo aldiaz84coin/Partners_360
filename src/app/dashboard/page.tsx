@@ -3,12 +3,18 @@ import { BarChart3, Route } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, ScoreBadge, EmptyState } from "@/components/ui";
 import { getAllPartnersSummary, averageOf, getCategoryWeights } from "@/lib/dashboard-data";
-import { PeriodSelect } from "./period-select";
+import { DashboardFilters } from "./dashboard-filters";
+import type { TechArea } from "@/generated/prisma/enums";
+
+const TECH_AREA_LABEL: Record<string, string> = {
+  AUTOMATIZACION: "Automatización",
+  DIGITALIZACION: "Digitalización",
+};
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; area?: string }>;
 }) {
   const periods = await prisma.period.findMany({ orderBy: { startDate: "desc" } });
   if (periods.length === 0) {
@@ -35,11 +41,12 @@ export default async function DashboardPage({
     );
   }
 
-  const { period: periodParam } = await searchParams;
+  const { period: periodParam, area: areaParam } = await searchParams;
   const selectedPeriod = periods.find((p) => p.id === periodParam) ?? periods[0];
+  const selectedTechArea = areaParam === "AUTOMATIZACION" || areaParam === "DIGITALIZACION" ? areaParam : "ALL";
 
   const [summary, categories] = await Promise.all([
-    getAllPartnersSummary(selectedPeriod.id),
+    getAllPartnersSummary(selectedPeriod.id, selectedTechArea === "ALL" ? undefined : (selectedTechArea as TechArea)),
     getCategoryWeights(),
   ]);
 
@@ -64,7 +71,9 @@ export default async function DashboardPage({
           </span>
         }
         subtitle="Visión agregada de la relación con partners, por periodo."
-        actions={<PeriodSelect periods={periods} selectedId={selectedPeriod.id} />}
+        actions={
+          <DashboardFilters periods={periods} selectedPeriodId={selectedPeriod.id} selectedTechArea={selectedTechArea} />
+        }
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -90,14 +99,21 @@ export default async function DashboardPage({
       </div>
 
       <Card className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-medium text-text-primary">Partners</h2>
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <h2 className="font-medium text-text-primary">Partners</h2>
+            {selectedTechArea !== "ALL" && <Badge tone="brand">{TECH_AREA_LABEL[selectedTechArea]}</Badge>}
+          </div>
           <div className="text-xs text-text-muted">
             Pesos: {categories.map((c) => `${c.code} ${c.weight}%`).join(" · ")}
           </div>
         </div>
         {summary.length === 0 ? (
-          <EmptyState>No hay partners activos todavía.</EmptyState>
+          <EmptyState>
+            {selectedTechArea === "ALL"
+              ? "No hay partners activos todavía."
+              : `No hay partners activos en el área de ${TECH_AREA_LABEL[selectedTechArea]}.`}
+          </EmptyState>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

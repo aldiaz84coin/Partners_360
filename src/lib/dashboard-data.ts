@@ -6,7 +6,7 @@ import {
   scoresByCategory,
   type CategoryScore,
 } from "@/lib/scoring";
-import type { StakeholderRole } from "@/generated/prisma/enums";
+import type { StakeholderRole, TechArea } from "@/generated/prisma/enums";
 
 export async function getCategoryWeights() {
   const categories = await prisma.category.findMany({ orderBy: { order: "asc" } });
@@ -117,8 +117,11 @@ export type PartnerSummary = {
   expected: number;
 };
 
-export async function getAllPartnersSummary(periodId: string): Promise<PartnerSummary[]> {
-  const partners = await prisma.partner.findMany({ where: { active: true }, orderBy: { name: "asc" } });
+export async function getAllPartnersSummary(periodId: string, techArea?: TechArea): Promise<PartnerSummary[]> {
+  const partners = await prisma.partner.findMany({
+    where: { active: true, ...(techArea ? { techAreas: { has: techArea } } : {}) },
+    orderBy: { name: "asc" },
+  });
   const categories = await getCategoryWeights();
 
   const results: PartnerSummary[] = [];
