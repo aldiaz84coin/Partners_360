@@ -5,6 +5,7 @@ import { AppNav } from "@/components/nav";
 const SECTIONS = [
   { href: "/admin", label: "Resumen" },
   { href: "/admin/partners", label: "Partners" },
+  { href: "/admin/technologies", label: "Tecnologías" },
   { href: "/admin/users", label: "Stakeholders" },
   { href: "/admin/questions", label: "Preguntas" },
   { href: "/admin/categories", label: "Categorías" },

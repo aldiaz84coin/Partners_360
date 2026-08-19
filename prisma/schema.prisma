@@ -47,6 +47,18 @@ enum EvaluationStatus {
   SUBMITTED
 }
 
+/// The two tracks partners can support — a partner may cover both.
+enum TechArea {
+  AUTOMATIZACION
+  DIGITALIZACION
+}
+
+enum PartnerCategory {
+  ESTRATEGICO
+  ESTANDAR
+  NUEVO
+}
+
 // ---------------------------------------------------------------------------
 // Identity & access
 // ---------------------------------------------------------------------------
@@ -79,10 +91,36 @@ model Partner {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  assignments PartnerAssignment[]
-  evaluations Evaluation[]
+  // Clasificación
+  category  PartnerCategory @default(NUEVO)
+  techAreas TechArea[] // permite ambas: Automatización y/o Digitalización
+
+  // Relación
+  partnershipStartDate DateTime?
+  agreementValidUntil  DateTime? // null = sin vigencia definida (N/A)
+
+  // Contacto principal
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+
+  technologies Technology[]
+  assignments  PartnerAssignment[]
+  evaluations  Evaluation[]
 
   @@map("partners")
+}
+
+/// Admin-managed tag catalog (e.g. "RPA", "iPaaS", "IA/Machine Learning").
+model Technology {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  active Boolean @default(true)
+  order  Int     @default(0)
+
+  partners Partner[]
+
+  @@map("technologies")
 }
 
 /// Who evaluates which partner, wearing which stakeholder hat.

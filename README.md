@@ -20,8 +20,12 @@ Owner), agregados en un dashboard de KPIs por partner, categoría y periodo.
   `STRATEGIC` (todos, con foco a futuro) o `SPECIFIC` (un stakeholder concreto).
 - `QuestionAudience`: qué roles responden cada pregunta y si es obligatoria u
   opcional para ese rol (la matriz ●/○ del marco).
-- `Partner`, `User` (con `systemRole`: `ADMIN` / `VIEWER` / `EVALUATOR`),
-  `PartnerAssignment` (qué usuario evalúa qué partner, con qué rol de stakeholder).
+- `Partner`: ficha del partner — categoría (`ESTRATEGICO`/`ESTANDAR`/`NUEVO`), área
+  tecnológica (`AUTOMATIZACION`/`DIGITALIZACION`, admite ambas), `Technology[]`
+  (catálogo de tags editable en `/admin/technologies`), fechas de inicio y
+  vigencia del acuerdo, y contacto principal.
+- `User` (con `systemRole`: `ADMIN` / `VIEWER` / `EVALUATOR`), `PartnerAssignment`
+  (qué usuario evalúa qué partner, con qué rol de stakeholder).
 - `Period`: ventanas de evaluación (trimestres), `OPEN` o `CLOSED`.
 - `Evaluation` + `Answer`: una evaluación es el conjunto de respuestas de un
   usuario, para un partner, en un periodo, actuando como un stakeholder concreto.

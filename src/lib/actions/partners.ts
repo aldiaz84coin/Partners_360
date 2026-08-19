@@ -1,28 +1,64 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
+export type FormState = { error?: string; success?: boolean };
+
+const optionalString = z.preprocess(
+  (v) => (v === "" || v == null ? undefined : v),
+  z.string().trim().optional()
+);
+const optionalDate = z.preprocess((v) => (v === "" || v == null ? undefined : v), z.coerce.date().optional());
+const optionalEmail = z.preprocess(
+  (v) => (v === "" || v == null ? undefined : v),
+  z.string().trim().email("Email de contacto inválido.").optional()
+);
+
 const partnerSchema = z.object({
   name: z.string().trim().min(2, "El nombre es obligatorio."),
-  description: z.string().trim().optional(),
+  description: optionalString,
+  category: z.enum(["ESTRATEGICO", "ESTANDAR", "NUEVO"]),
+  techAreas: z.array(z.enum(["AUTOMATIZACION", "DIGITALIZACION"])),
+  technologyIds: z.array(z.string()),
+  partnershipStartDate: optionalDate,
+  agreementValidUntil: optionalDate,
+  contactName: optionalString,
+  contactEmail: optionalEmail,
+  contactPhone: optionalString,
+  active: z.boolean(),
 });
 
-export type FormState = { error?: string; success?: boolean };
+function readPartnerForm(formData: FormData) {
+  return {
+    name: formData.get("name"),
+    description: formData.get("description") || undefined,
+    category: formData.get("category"),
+    techAreas: formData.getAll("techAreas"),
+    technologyIds: formData.getAll("technologyIds"),
+    partnershipStartDate: formData.get("partnershipStartDate") || undefined,
+    agreementValidUntil: formData.get("agreementValidUntil") || undefined,
+    contactName: formData.get("contactName") || undefined,
+    contactEmail: formData.get("contactEmail") || undefined,
+    contactPhone: formData.get("contactPhone") || undefined,
+    active: formData.get("active") === "on",
+  };
+}
 
 export async function createPartnerAction(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireUser(["ADMIN"]);
-  const parsed = partnerSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description") || undefined,
-  });
+  const parsed = partnerSchema.safeParse(readPartnerForm(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
 
-  await prisma.partner.create({ data: parsed.data });
+  const { technologyIds, ...data } = parsed.data;
+  const partner = await prisma.partner.create({
+    data: { ...data, technologies: { connect: technologyIds.map((id) => ({ id })) } },
+  });
   revalidatePath("/admin/partners");
-  return { success: true };
+  redirect(`/admin/partners/${partner.id}`);
 }
 
 export async function updatePartnerAction(
@@ -31,13 +67,14 @@ export async function updatePartnerAction(
   formData: FormData
 ): Promise<FormState> {
   await requireUser(["ADMIN"]);
-  const parsed = partnerSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description") || undefined,
-  });
+  const parsed = partnerSchema.safeParse(readPartnerForm(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
 
-  await prisma.partner.update({ where: { id: partnerId }, data: parsed.data });
+  const { technologyIds, ...data } = parsed.data;
+  await prisma.partner.update({
+    where: { id: partnerId },
+    data: { ...data, technologies: { set: technologyIds.map((id) => ({ id })) } },
+  });
   revalidatePath("/admin/partners");
   revalidatePath(`/admin/partners/${partnerId}`);
   return { success: true };

@@ -1,18 +1,35 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
-import { toggleAssignmentAction } from "@/lib/actions/partners";
+import { toggleAssignmentAction, updatePartnerAction } from "@/lib/actions/partners";
 import { ROLE_LABEL } from "@/lib/chart-colors";
-import { EditPartnerForm } from "./edit-partner-form";
+import { PartnerForm } from "../partner-form";
 import { AddAssignmentForm } from "./add-assignment-form";
+
+function toDateInput(date: Date | null): string {
+  return date ? date.toISOString().slice(0, 10) : "";
+}
 
 export default async function AdminPartnerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const partner = await prisma.partner.findUnique({
-    where: { id },
-    include: { assignments: { include: { user: true }, orderBy: { stakeholderRole: "asc" } } },
-  });
+  const [partner, activeTechnologies] = await Promise.all([
+    prisma.partner.findUnique({
+      where: { id },
+      include: {
+        assignments: { include: { user: true }, orderBy: { stakeholderRole: "asc" } },
+        technologies: { select: { id: true, name: true, active: true } },
+      },
+    }),
+    prisma.technology.findMany({ where: { active: true }, orderBy: { order: "asc" }, select: { id: true, name: true } }),
+  ]);
   if (!partner) notFound();
+
+  // A technology deactivated after being assigned must stay selectable here —
+  // otherwise saving the form would silently drop it from the partner.
+  const technologies = [
+    ...activeTechnologies,
+    ...partner.technologies.filter((t) => !t.active).map((t) => ({ id: t.id, name: `${t.name} (inactiva)` })),
+  ];
 
   const users = await prisma.user.findMany({
     where: { active: true, systemRole: "EVALUATOR" },
@@ -26,7 +43,23 @@ export default async function AdminPartnerDetailPage({ params }: { params: Promi
 
       <Card className="mb-6">
         <h2 className="font-medium text-text-primary mb-3">Datos del partner</h2>
-        <EditPartnerForm partnerId={partner.id} name={partner.name} description={partner.description ?? ""} />
+        <PartnerForm
+          action={updatePartnerAction.bind(null, partner.id)}
+          technologies={technologies}
+          defaults={{
+            name: partner.name,
+            description: partner.description ?? "",
+            category: partner.category,
+            techAreas: partner.techAreas,
+            technologyIds: partner.technologies.map((t) => t.id),
+            partnershipStartDate: toDateInput(partner.partnershipStartDate),
+            agreementValidUntil: toDateInput(partner.agreementValidUntil),
+            contactName: partner.contactName ?? "",
+            contactEmail: partner.contactEmail ?? "",
+            contactPhone: partner.contactPhone ?? "",
+            active: partner.active,
+          }}
+        />
       </Card>
 
       <Card className="mb-6">

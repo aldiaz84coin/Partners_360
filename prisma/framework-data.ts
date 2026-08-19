@@ -17,6 +17,22 @@ export const CATEGORIES = [
 export const ALL_ROLES = ["PRO", "VEN", "PRE", "DEL", "OPS", "OWN"] as const;
 export type Role = (typeof ALL_ROLES)[number];
 
+/// Starter tag catalog for the Technology multi-select on partners. Just a
+/// sensible default so the picker isn't empty on a fresh deploy — the list is
+/// fully editable from /admin/technologies afterwards.
+export const DEFAULT_TECHNOLOGIES = [
+  "RPA",
+  "IA / Machine Learning",
+  "iPaaS / Integración",
+  "BPM",
+  "Low-code / No-code",
+  "Cloud / Infraestructura",
+  "Ciberseguridad",
+  "Data & Analytics",
+  "IoT",
+  "ERP / CRM",
+] as const;
+
 export type SeedQuestion = {
   code: string;
   text: string;

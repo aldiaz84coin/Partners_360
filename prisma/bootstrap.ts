@@ -14,7 +14,7 @@
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
-import { CATEGORIES, ALL_QUESTIONS } from "./framework-data";
+import { CATEGORIES, ALL_QUESTIONS, DEFAULT_TECHNOLOGIES } from "./framework-data";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -57,6 +57,18 @@ async function syncFramework() {
   );
 }
 
+async function syncTechnologies() {
+  let created = 0;
+  for (let i = 0; i < DEFAULT_TECHNOLOGIES.length; i++) {
+    const name = DEFAULT_TECHNOLOGIES[i];
+    const existing = await prisma.technology.findUnique({ where: { name } });
+    if (existing) continue; // editable from /admin/technologies — never overwrite
+    created++;
+    await prisma.technology.create({ data: { name, order: i } });
+  }
+  console.log(`[bootstrap] Technology catalog ready: ${DEFAULT_TECHNOLOGIES.length} tags (${created} new).`);
+}
+
 async function ensureAdmin() {
   const existingAdmin = await prisma.user.findFirst({ where: { systemRole: "ADMIN" } });
   if (existingAdmin) {
@@ -90,6 +102,7 @@ async function ensureAdmin() {
 
 async function main() {
   await syncFramework();
+  await syncTechnologies();
   await ensureAdmin();
 }
 
