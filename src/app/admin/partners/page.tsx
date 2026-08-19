@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
-import { togglePartnerActiveAction } from "@/lib/actions/partners";
+import { togglePartnerActiveAction, deletePartnerAction } from "@/lib/actions/partners";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 
 const CATEGORY_LABEL: Record<string, string> = {
   ESTRATEGICO: "Estratégico",
@@ -67,6 +68,18 @@ export default async function AdminPartnersPage() {
                     <button type="submit" className="btn btn-ghost text-sm">
                       {p.active ? "Archivar" : "Reactivar"}
                     </button>
+                  </form>
+                  <form
+                    action={async () => {
+                      "use server";
+                      await deletePartnerAction(p.id);
+                    }}
+                  >
+                    <ConfirmSubmitButton
+                      confirmText={`¿Eliminar el partner "${p.name}"? Se borrarán también sus evaluadores asignados y todas sus evaluaciones (${p._count.assignments} evaluadores). Esta acción no se puede deshacer.`}
+                    >
+                      Eliminar
+                    </ConfirmSubmitButton>
                   </form>
                 </div>
               </li>

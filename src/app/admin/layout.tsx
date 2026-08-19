@@ -10,6 +10,7 @@ const SECTIONS = [
   { href: "/admin/questions", label: "Preguntas" },
   { href: "/admin/categories", label: "Categorías" },
   { href: "/admin/periods", label: "Periodos" },
+  { href: "/admin/campaigns/new", label: "Nueva Campaña" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

@@ -31,3 +31,10 @@ export async function toggleTechnologyActiveAction(technologyId: string, active:
   revalidatePath("/admin/technologies");
   revalidatePath("/admin/partners");
 }
+
+export async function deleteTechnologyAction(technologyId: string) {
+  await requireUser(["ADMIN"]);
+  await prisma.technology.delete({ where: { id: technologyId } });
+  revalidatePath("/admin/technologies");
+  revalidatePath("/admin/partners");
+}

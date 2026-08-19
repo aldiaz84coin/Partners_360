@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
-import { toggleTechnologyActiveAction } from "@/lib/actions/technologies";
+import { toggleTechnologyActiveAction, deleteTechnologyAction } from "@/lib/actions/technologies";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { NewTechnologyForm } from "./new-technology-form";
 
 export default async function AdminTechnologiesPage() {
@@ -35,16 +36,30 @@ export default async function AdminTechnologiesPage() {
                   </span>
                   {!t.active && <Badge>Inactiva</Badge>}
                 </div>
-                <form
-                  action={async () => {
-                    "use server";
-                    await toggleTechnologyActiveAction(t.id, !t.active);
-                  }}
-                >
-                  <button type="submit" className="btn btn-ghost text-sm">
-                    {t.active ? "Desactivar" : "Reactivar"}
-                  </button>
-                </form>
+                <div className="flex items-center gap-2 shrink-0">
+                  <form
+                    action={async () => {
+                      "use server";
+                      await toggleTechnologyActiveAction(t.id, !t.active);
+                    }}
+                  >
+                    <button type="submit" className="btn btn-ghost text-sm">
+                      {t.active ? "Desactivar" : "Reactivar"}
+                    </button>
+                  </form>
+                  <form
+                    action={async () => {
+                      "use server";
+                      await deleteTechnologyAction(t.id);
+                    }}
+                  >
+                    <ConfirmSubmitButton
+                      confirmText={`¿Eliminar la tecnología "${t.name}"? Se quitará del catálogo y de todos los partners que la tengan asignada. Esta acción no se puede deshacer.`}
+                    >
+                      Eliminar
+                    </ConfirmSubmitButton>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>
