@@ -59,6 +59,26 @@ enum PartnerCategory {
   NUEVO
 }
 
+/// Tipo de acuerdo contractual con el partner.
+enum AgreementType {
+  ACUERDO_SIN_CG // acuerdo de relación sin condiciones generales
+  ACUERDO_CON_CG // acuerdo de relación con condiciones generales
+  SIN_ACUERDO
+}
+
+/// Entidad jurídica de Telefónica que suscribe el acuerdo.
+enum LegalEntity {
+  TELEFONICA_ESPANA
+  TELEFONICA_TECH
+  GEPROM
+}
+
+enum YesNoNA {
+  SI
+  NO
+  NA
+}
+
 // ---------------------------------------------------------------------------
 // Identity & access
 // ---------------------------------------------------------------------------
@@ -111,6 +131,26 @@ model Partner {
   contactName  String?
   contactEmail String?
   contactPhone String?
+
+  // Legal y Compras
+  agreementType      AgreementType @default(SIN_ACUERDO)
+  agreementEntity    LegalEntity?
+  agreementStartDate DateTime?
+  agreementEndDate   DateTime?
+
+  slaStatus    YesNoNA   @default(NA)
+  slaStartDate DateTime?
+  slaEndDate   DateTime?
+
+  ndaStatus    YesNoNA   @default(NA)
+  ndaStartDate DateTime?
+  ndaEndDate   DateTime?
+
+  mouStatus    YesNoNA   @default(NA)
+  mouStartDate DateTime?
+  mouEndDate   DateTime?
+
+  exclusivity Boolean @default(false)
 
   technologies Technology[]
   assignments  PartnerAssignment[]

@@ -6,6 +6,7 @@ import {
   scoresByCategory,
   type CategoryScore,
 } from "@/lib/scoring";
+import { getExpiringLegalDocs } from "@/lib/partner-legal";
 import type { StakeholderRole, TechArea } from "@/generated/prisma/enums";
 
 export async function getCategoryWeights() {
@@ -115,6 +116,7 @@ export type PartnerSummary = {
   overall: number | null;
   responded: number;
   expected: number;
+  expiringDocsCount: number;
 };
 
 export async function getAllPartnersSummary(periodId: string, techArea?: TechArea): Promise<PartnerSummary[]> {
@@ -143,6 +145,7 @@ export async function getAllPartnersSummary(periodId: string, techArea?: TechAre
       overall: overallScore(categoryScores),
       responded: evaluations.length,
       expected,
+      expiringDocsCount: getExpiringLegalDocs(partner).length,
     });
   }
   return results;

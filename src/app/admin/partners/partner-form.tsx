@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { FormState } from "@/lib/actions/partners";
 
 const CATEGORY_OPTIONS = [
@@ -12,6 +12,25 @@ const CATEGORY_OPTIONS = [
 const TECH_AREA_OPTIONS = [
   { value: "AUTOMATIZACION", label: "Automatización" },
   { value: "DIGITALIZACION", label: "Digitalización" },
+];
+
+const AGREEMENT_TYPE_OPTIONS = [
+  { value: "SIN_ACUERDO", label: "Sin Acuerdo" },
+  { value: "ACUERDO_SIN_CG", label: "Acuerdo sin CG" },
+  { value: "ACUERDO_CON_CG", label: "Acuerdo con CG" },
+];
+
+const LEGAL_ENTITY_OPTIONS = [
+  { value: "", label: "Selecciona…" },
+  { value: "TELEFONICA_ESPANA", label: "Telefónica España" },
+  { value: "TELEFONICA_TECH", label: "Telefónica Tech" },
+  { value: "GEPROM", label: "Geprom" },
+];
+
+const YES_NO_NA_OPTIONS = [
+  { value: "NA", label: "N/A" },
+  { value: "SI", label: "Sí" },
+  { value: "NO", label: "No" },
 ];
 
 type Technology = { id: string; name: string };
@@ -28,6 +47,20 @@ export type PartnerFormDefaults = {
   contactEmail: string;
   contactPhone: string;
   active: boolean;
+  agreementType: string;
+  agreementEntity: string;
+  agreementStartDate: string;
+  agreementEndDate: string;
+  slaStatus: string;
+  slaStartDate: string;
+  slaEndDate: string;
+  ndaStatus: string;
+  ndaStartDate: string;
+  ndaEndDate: string;
+  mouStatus: string;
+  mouStartDate: string;
+  mouEndDate: string;
+  exclusivity: boolean;
 };
 
 const initialState: FormState = {};
@@ -45,6 +78,11 @@ export function PartnerForm({
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const d = defaults;
+
+  const [agreementType, setAgreementType] = useState(d?.agreementType ?? "SIN_ACUERDO");
+  const [slaStatus, setSlaStatus] = useState(d?.slaStatus ?? "NA");
+  const [ndaStatus, setNdaStatus] = useState(d?.ndaStatus ?? "NA");
+  const [mouStatus, setMouStatus] = useState(d?.mouStatus ?? "NA");
 
   return (
     <form action={formAction} className="flex flex-col gap-8 max-w-2xl">
@@ -142,6 +180,106 @@ export function PartnerForm({
           <input type="checkbox" name="active" defaultChecked={d ? d.active : true} />
           Partner activo
         </label>
+      </section>
+
+      {/* Legal y Compras */}
+      <section>
+        <h2 className="text-sm font-semibold text-text-primary mb-3">Legal y Compras</h2>
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Acuerdo de relación</label>
+            <select
+              name="agreementType"
+              defaultValue={d?.agreementType ?? "SIN_ACUERDO"}
+              onChange={(e) => setAgreementType(e.target.value)}
+              className="input max-w-xs"
+            >
+              {AGREEMENT_TYPE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            {agreementType !== "SIN_ACUERDO" && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1">Jurídica</label>
+                  <select name="agreementEntity" defaultValue={d?.agreementEntity ?? ""} className="input">
+                    {LEGAL_ENTITY_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1">Fecha inicio</label>
+                  <input
+                    name="agreementStartDate"
+                    type="date"
+                    defaultValue={d?.agreementStartDate}
+                    className="input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1">Fecha fin</label>
+                  <input name="agreementEndDate" type="date" defaultValue={d?.agreementEndDate} className="input" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {(
+            [
+              { key: "sla", label: "SLA", status: slaStatus, setStatus: setSlaStatus },
+              { key: "nda", label: "NDA", status: ndaStatus, setStatus: setNdaStatus },
+              { key: "mou", label: "MOU", status: mouStatus, setStatus: setMouStatus },
+            ] as const
+          ).map((doc) => (
+            <div key={doc.key}>
+              <label className="block text-sm font-medium text-text-secondary mb-1">{doc.label}</label>
+              <select
+                name={`${doc.key}Status`}
+                defaultValue={d?.[`${doc.key}Status`] ?? "NA"}
+                onChange={(e) => doc.setStatus(e.target.value)}
+                className="input max-w-xs"
+              >
+                {YES_NO_NA_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              {doc.status === "SI" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 max-w-md">
+                  <div>
+                    <label className="block text-xs font-medium text-text-secondary mb-1">Fecha inicio</label>
+                    <input
+                      name={`${doc.key}StartDate`}
+                      type="date"
+                      defaultValue={d?.[`${doc.key}StartDate`]}
+                      className="input"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-text-secondary mb-1">Fecha fin</label>
+                    <input
+                      name={`${doc.key}EndDate`}
+                      type="date"
+                      defaultValue={d?.[`${doc.key}EndDate`]}
+                      className="input"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+
+          <label className="flex items-center gap-1.5 text-sm text-text-secondary">
+            <input type="checkbox" name="exclusivity" defaultChecked={d ? d.exclusivity : false} />
+            Exclusividad
+          </label>
+        </div>
       </section>
 
       {/* Contacto principal */}

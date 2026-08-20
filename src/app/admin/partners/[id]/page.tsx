@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
+import { AlertTriangle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 import { toggleAssignmentAction, updatePartnerAction } from "@/lib/actions/partners";
 import { ROLE_LABEL } from "@/lib/chart-colors";
+import { getExpiringLegalDocs } from "@/lib/partner-legal";
 import { PartnerForm } from "../partner-form";
 import { AddAssignmentForm } from "./add-assignment-form";
 
@@ -24,6 +26,8 @@ export default async function AdminPartnerDetailPage({ params }: { params: Promi
   ]);
   if (!partner) notFound();
 
+  const expiringDocs = getExpiringLegalDocs(partner);
+
   // A technology deactivated after being assigned must stay selectable here —
   // otherwise saving the form would silently drop it from the partner.
   const technologies = [
@@ -40,6 +44,19 @@ export default async function AdminPartnerDetailPage({ params }: { params: Promi
   return (
     <>
       <PageHeader title={partner.name} subtitle="Ficha del partner y evaluadores asignados." />
+
+      {expiringDocs.length > 0 && (
+        <div className="mb-6 flex items-start gap-2 rounded-lg border border-[var(--status-critical)]/30 bg-surface p-3 text-sm text-[var(--status-critical)]">
+          <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+          <div>
+            {expiringDocs.map((doc) => (
+              <div key={doc.key}>
+                {doc.label}: {doc.expired ? "vencido el" : "vence el"} {doc.endDate.toLocaleDateString("es-ES")}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Card className="mb-6">
         <h2 className="font-medium text-text-primary mb-3">Datos del partner</h2>
@@ -58,6 +75,20 @@ export default async function AdminPartnerDetailPage({ params }: { params: Promi
             contactEmail: partner.contactEmail ?? "",
             contactPhone: partner.contactPhone ?? "",
             active: partner.active,
+            agreementType: partner.agreementType,
+            agreementEntity: partner.agreementEntity ?? "",
+            agreementStartDate: toDateInput(partner.agreementStartDate),
+            agreementEndDate: toDateInput(partner.agreementEndDate),
+            slaStatus: partner.slaStatus,
+            slaStartDate: toDateInput(partner.slaStartDate),
+            slaEndDate: toDateInput(partner.slaEndDate),
+            ndaStatus: partner.ndaStatus,
+            ndaStartDate: toDateInput(partner.ndaStartDate),
+            ndaEndDate: toDateInput(partner.ndaEndDate),
+            mouStatus: partner.mouStatus,
+            mouStartDate: toDateInput(partner.mouStartDate),
+            mouEndDate: toDateInput(partner.mouEndDate),
+            exclusivity: partner.exclusivity,
           }}
         />
       </Card>

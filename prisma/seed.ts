@@ -19,6 +19,14 @@ function mulberry32(seed: number) {
 }
 const rand = mulberry32(20260101);
 
+// Relative to "today" so the legal-document expiry warning has something to show
+// regardless of when the seed is run.
+function monthsFromNow(months: number): Date {
+  const d = new Date();
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
 
 const DEMO_USERS: { email: string; name: string; role: Role }[] = [
   { email: "producto@partners360.local", name: "Ana Producto", role: "PRO" },
@@ -42,6 +50,20 @@ const DEMO_PARTNERS = [
     contactName: "Marta Sánchez",
     contactEmail: "marta.sanchez@technova.example",
     contactPhone: "+34 600 111 222",
+    agreementType: "ACUERDO_CON_CG" as const,
+    agreementEntity: "TELEFONICA_ESPANA" as const,
+    agreementStartDate: new Date("2023-01-15"),
+    agreementEndDate: monthsFromNow(9),
+    slaStatus: "SI" as const,
+    slaStartDate: new Date("2023-01-15"),
+    slaEndDate: monthsFromNow(3), // dentro de 6 meses: dispara el aviso
+    ndaStatus: "SI" as const,
+    ndaStartDate: new Date("2023-01-01"),
+    ndaEndDate: monthsFromNow(-0.5), // ya vencido: dispara el aviso
+    mouStatus: "NA" as const,
+    mouStartDate: null,
+    mouEndDate: null,
+    exclusivity: true,
   },
   {
     key: "cloudbridge",
@@ -55,6 +77,20 @@ const DEMO_PARTNERS = [
     contactName: "Jorge Ibáñez",
     contactEmail: "jorge.ibanez@cloudbridge.example",
     contactPhone: "+34 600 333 444",
+    agreementType: "ACUERDO_SIN_CG" as const,
+    agreementEntity: "TELEFONICA_TECH" as const,
+    agreementStartDate: new Date("2024-06-01"),
+    agreementEndDate: monthsFromNow(4), // dentro de 6 meses: dispara el aviso
+    slaStatus: "NO" as const,
+    slaStartDate: null,
+    slaEndDate: null,
+    ndaStatus: "SI" as const,
+    ndaStartDate: new Date("2024-06-01"),
+    ndaEndDate: monthsFromNow(18),
+    mouStatus: "SI" as const,
+    mouStartDate: new Date("2024-06-01"),
+    mouEndDate: monthsFromNow(5), // dentro de 6 meses: dispara el aviso
+    exclusivity: false,
   },
 ] as const;
 
@@ -175,6 +211,20 @@ async function main() {
       contactName: p.contactName,
       contactEmail: p.contactEmail,
       contactPhone: p.contactPhone,
+      agreementType: p.agreementType,
+      agreementEntity: p.agreementEntity,
+      agreementStartDate: p.agreementStartDate,
+      agreementEndDate: p.agreementEndDate,
+      slaStatus: p.slaStatus,
+      slaStartDate: p.slaStartDate,
+      slaEndDate: p.slaEndDate,
+      ndaStatus: p.ndaStatus,
+      ndaStartDate: p.ndaStartDate,
+      ndaEndDate: p.ndaEndDate,
+      mouStatus: p.mouStatus,
+      mouStartDate: p.mouStartDate,
+      mouEndDate: p.mouEndDate,
+      exclusivity: p.exclusivity,
     };
     const existing = await prisma.partner.findFirst({ where: { name: p.name } });
     const partner = existing

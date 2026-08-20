@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Route } from "lucide-react";
+import { BarChart3, Route, AlertTriangle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, ScoreBadge, EmptyState } from "@/components/ui";
 import { getAllPartnersSummary, averageOf, getCategoryWeights } from "@/lib/dashboard-data";
@@ -122,6 +122,7 @@ export default async function DashboardPage({
                   <th className="py-2 font-medium">Partner</th>
                   <th className="py-2 font-medium">Puntuación global</th>
                   <th className="py-2 font-medium">Respuestas</th>
+                  <th className="py-2 font-medium">Legal</th>
                   <th className="py-2"></th>
                 </tr>
               </thead>
@@ -137,6 +138,20 @@ export default async function DashboardPage({
                       </td>
                       <td className="py-3 text-text-secondary">
                         {p.responded} / {p.expected}
+                      </td>
+                      <td className="py-3">
+                        {p.expiringDocsCount > 0 ? (
+                          <span
+                            className="inline-flex items-center gap-1 text-xs font-medium"
+                            style={{ color: "var(--status-critical)" }}
+                            title={`${p.expiringDocsCount} documento${p.expiringDocsCount === 1 ? "" : "s"} legal${p.expiringDocsCount === 1 ? "" : "es"} por vencer o vencido${p.expiringDocsCount === 1 ? "" : "s"} en menos de 6 meses`}
+                          >
+                            <AlertTriangle size={14} aria-hidden />
+                            {p.expiringDocsCount}
+                          </span>
+                        ) : (
+                          <span className="text-text-muted">—</span>
+                        )}
                       </td>
                       <td className="py-3 text-right">
                         <Link

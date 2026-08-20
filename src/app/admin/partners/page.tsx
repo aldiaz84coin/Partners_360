@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 import { togglePartnerActiveAction, deletePartnerAction } from "@/lib/actions/partners";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
+import { getExpiringLegalDocs } from "@/lib/partner-legal";
 
 const CATEGORY_LABEL: Record<string, string> = {
   ESTRATEGICO: "Estratégico",
@@ -50,6 +52,22 @@ export default async function AdminPartnersPage() {
                       <Badge key={a}>{TECH_AREA_LABEL[a]}</Badge>
                     ))}
                     {!p.active && <Badge>Archivado</Badge>}
+                    {(() => {
+                      const expiringDocs = getExpiringLegalDocs(p);
+                      if (expiringDocs.length === 0) return null;
+                      return (
+                        <span
+                          className="badge inline-flex items-center gap-1"
+                          style={{ background: "#d03b3b1a", color: "var(--status-critical)" }}
+                          title={expiringDocs
+                            .map((d) => `${d.label}: ${d.expired ? "vencido" : "vence"} ${d.endDate.toLocaleDateString("es-ES")}`)
+                            .join(" · ")}
+                        >
+                          <AlertTriangle size={12} aria-hidden />
+                          {expiringDocs.length} documento{expiringDocs.length === 1 ? "" : "s"} por vencer
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div className="text-xs text-text-muted mt-0.5">
                     {p.description || "Sin descripción"} · {p._count.assignments} evaluadores asignados

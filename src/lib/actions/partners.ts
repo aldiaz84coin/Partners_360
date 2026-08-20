@@ -30,6 +30,23 @@ const partnerSchema = z.object({
   contactEmail: optionalEmail,
   contactPhone: optionalString,
   active: z.boolean(),
+  agreementType: z.enum(["ACUERDO_SIN_CG", "ACUERDO_CON_CG", "SIN_ACUERDO"]),
+  agreementEntity: z.preprocess(
+    (v) => (v === "" || v == null ? undefined : v),
+    z.enum(["TELEFONICA_ESPANA", "TELEFONICA_TECH", "GEPROM"]).optional()
+  ),
+  agreementStartDate: optionalDate,
+  agreementEndDate: optionalDate,
+  slaStatus: z.enum(["SI", "NO", "NA"]),
+  slaStartDate: optionalDate,
+  slaEndDate: optionalDate,
+  ndaStatus: z.enum(["SI", "NO", "NA"]),
+  ndaStartDate: optionalDate,
+  ndaEndDate: optionalDate,
+  mouStatus: z.enum(["SI", "NO", "NA"]),
+  mouStartDate: optionalDate,
+  mouEndDate: optionalDate,
+  exclusivity: z.boolean(),
 });
 
 function readPartnerForm(formData: FormData) {
@@ -45,6 +62,20 @@ function readPartnerForm(formData: FormData) {
     contactEmail: formData.get("contactEmail") || undefined,
     contactPhone: formData.get("contactPhone") || undefined,
     active: formData.get("active") === "on",
+    agreementType: formData.get("agreementType") || "SIN_ACUERDO",
+    agreementEntity: formData.get("agreementEntity") || undefined,
+    agreementStartDate: formData.get("agreementStartDate") || undefined,
+    agreementEndDate: formData.get("agreementEndDate") || undefined,
+    slaStatus: formData.get("slaStatus") || "NA",
+    slaStartDate: formData.get("slaStartDate") || undefined,
+    slaEndDate: formData.get("slaEndDate") || undefined,
+    ndaStatus: formData.get("ndaStatus") || "NA",
+    ndaStartDate: formData.get("ndaStartDate") || undefined,
+    ndaEndDate: formData.get("ndaEndDate") || undefined,
+    mouStatus: formData.get("mouStatus") || "NA",
+    mouStartDate: formData.get("mouStartDate") || undefined,
+    mouEndDate: formData.get("mouEndDate") || undefined,
+    exclusivity: formData.get("exclusivity") === "on",
   };
 }
 
