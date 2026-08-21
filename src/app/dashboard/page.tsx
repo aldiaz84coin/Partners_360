@@ -13,8 +13,8 @@ const TECH_AREA_LABEL: Record<string, string> = {
 
 const CATEGORY_LABEL: Record<string, string> = {
   ESTRATEGICO: "Estratégico",
-  ESTANDAR: "Estándar",
-  NUEVO: "Nuevo",
+  ESTANDAR: "Estandard",
+  EN_EVALUACION: "En Evaluación",
 };
 
 export default async function DashboardPage({

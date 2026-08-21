@@ -21,7 +21,7 @@ const optionalEmail = z.preprocess(
 const partnerSchema = z.object({
   name: z.string().trim().min(2, "El nombre es obligatorio."),
   description: optionalString,
-  category: z.enum(["ESTRATEGICO", "ESTANDAR", "NUEVO"]),
+  category: z.enum(["ESTRATEGICO", "ESTANDAR", "EN_EVALUACION"]),
   techAreas: z.array(z.enum(["AUTOMATIZACION", "DIGITALIZACION"])),
   technologyIds: z.array(z.string()),
   partnershipStartDate: optionalDate,

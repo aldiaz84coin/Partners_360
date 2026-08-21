@@ -12,8 +12,8 @@ type Evaluator = { id: string; name: string; email: string; stakeholderRole: str
 
 const CATEGORY_LABEL: Record<string, string> = {
   ESTRATEGICO: "Estratégico",
-  ESTANDAR: "Estándar",
-  NUEVO: "Nuevo",
+  ESTANDAR: "Estandard",
+  EN_EVALUACION: "En Evaluación",
 };
 
 const ROLE_LABEL: Record<string, string> = {

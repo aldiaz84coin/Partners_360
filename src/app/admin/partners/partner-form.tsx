@@ -5,8 +5,8 @@ import type { FormState } from "@/lib/actions/partners";
 
 const CATEGORY_OPTIONS = [
   { value: "ESTRATEGICO", label: "Estratégico" },
-  { value: "ESTANDAR", label: "Estándar" },
-  { value: "NUEVO", label: "Nuevo" },
+  { value: "ESTANDAR", label: "Estandard" },
+  { value: "EN_EVALUACION", label: "En Evaluación" },
 ];
 
 const TECH_AREA_OPTIONS = [
@@ -107,7 +107,7 @@ export function PartnerForm({
         <div className="flex flex-col gap-4">
           <div className="max-w-xs">
             <label className="block text-sm font-medium text-text-secondary mb-1">Categoría</label>
-            <select name="category" defaultValue={d?.category ?? "NUEVO"} className="input">
+            <select name="category" defaultValue={d?.category ?? "EN_EVALUACION"} className="input">
               {CATEGORY_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}

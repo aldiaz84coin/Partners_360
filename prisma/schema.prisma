@@ -56,7 +56,7 @@ enum TechArea {
 enum PartnerCategory {
   ESTRATEGICO
   ESTANDAR
-  NUEVO
+  EN_EVALUACION
 }
 
 /// Tipo de acuerdo contractual con el partner.
@@ -120,7 +120,7 @@ model Partner {
   updatedAt   DateTime @updatedAt
 
   // Clasificación
-  category  PartnerCategory @default(NUEVO)
+  category  PartnerCategory @default(EN_EVALUACION)
   techAreas TechArea[] // permite ambas: Automatización y/o Digitalización
 
   // Relación

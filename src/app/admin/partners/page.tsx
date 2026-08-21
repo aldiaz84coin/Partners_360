@@ -8,8 +8,8 @@ import { getExpiringLegalDocs } from "@/lib/partner-legal";
 
 const CATEGORY_LABEL: Record<string, string> = {
   ESTRATEGICO: "Estratégico",
-  ESTANDAR: "Estándar",
-  NUEVO: "Nuevo",
+  ESTANDAR: "Estandard",
+  EN_EVALUACION: "En Evaluación",
 };
 
 const TECH_AREA_LABEL: Record<string, string> = {
