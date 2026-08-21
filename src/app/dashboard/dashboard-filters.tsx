@@ -3,6 +3,7 @@
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 type Period = { id: string; label: string; status: string };
+type Technology = { id: string; name: string };
 
 const TECH_AREA_OPTIONS = [
   { value: "ALL", label: "Todas las áreas" },
@@ -12,12 +13,16 @@ const TECH_AREA_OPTIONS = [
 
 export function DashboardFilters({
   periods,
+  technologies,
   selectedPeriodId,
   selectedTechArea,
+  selectedTechnologyId,
 }: {
   periods: Period[];
+  technologies: Technology[];
   selectedPeriodId: string;
   selectedTechArea: string;
+  selectedTechnologyId: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -39,6 +44,18 @@ export function DashboardFilters({
         {TECH_AREA_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
+          </option>
+        ))}
+      </select>
+      <select
+        className="input w-auto"
+        defaultValue={selectedTechnologyId}
+        onChange={(e) => setParam("tech", e.target.value)}
+      >
+        <option value="ALL">Todas las tecnologías</option>
+        {technologies.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name}
           </option>
         ))}
       </select>

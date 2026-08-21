@@ -11,10 +11,16 @@ const TECH_AREA_LABEL: Record<string, string> = {
   DIGITALIZACION: "Digitalización",
 };
 
+const CATEGORY_LABEL: Record<string, string> = {
+  ESTRATEGICO: "Estratégico",
+  ESTANDAR: "Estándar",
+  NUEVO: "Nuevo",
+};
+
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string; area?: string }>;
+  searchParams: Promise<{ period?: string; area?: string; tech?: string }>;
 }) {
   const periods = await prisma.period.findMany({ orderBy: { startDate: "desc" } });
   if (periods.length === 0) {
@@ -41,12 +47,22 @@ export default async function DashboardPage({
     );
   }
 
-  const { period: periodParam, area: areaParam } = await searchParams;
+  const { period: periodParam, area: areaParam, tech: techParam } = await searchParams;
   const selectedPeriod = periods.find((p) => p.id === periodParam) ?? periods[0];
   const selectedTechArea = areaParam === "AUTOMATIZACION" || areaParam === "DIGITALIZACION" ? areaParam : "ALL";
 
+  const technologies = await prisma.technology.findMany({
+    where: { active: true },
+    orderBy: { order: "asc" },
+    select: { id: true, name: true },
+  });
+  const selectedTechnologyId = techParam && technologies.some((t) => t.id === techParam) ? techParam : "ALL";
+
   const [summary, categories] = await Promise.all([
-    getAllPartnersSummary(selectedPeriod.id, selectedTechArea === "ALL" ? undefined : (selectedTechArea as TechArea)),
+    getAllPartnersSummary(selectedPeriod.id, {
+      techArea: selectedTechArea === "ALL" ? undefined : (selectedTechArea as TechArea),
+      technologyId: selectedTechnologyId === "ALL" ? undefined : selectedTechnologyId,
+    }),
     getCategoryWeights(),
   ]);
 
@@ -72,7 +88,13 @@ export default async function DashboardPage({
         }
         subtitle="Visión agregada de la relación con partners, por periodo."
         actions={
-          <DashboardFilters periods={periods} selectedPeriodId={selectedPeriod.id} selectedTechArea={selectedTechArea} />
+          <DashboardFilters
+            periods={periods}
+            technologies={technologies}
+            selectedPeriodId={selectedPeriod.id}
+            selectedTechArea={selectedTechArea}
+            selectedTechnologyId={selectedTechnologyId}
+          />
         }
       />
 
@@ -100,9 +122,12 @@ export default async function DashboardPage({
 
       <Card className="mb-6">
         <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h2 className="font-medium text-text-primary">Partners</h2>
             {selectedTechArea !== "ALL" && <Badge tone="brand">{TECH_AREA_LABEL[selectedTechArea]}</Badge>}
+            {selectedTechnologyId !== "ALL" && (
+              <Badge tone="brand">{technologies.find((t) => t.id === selectedTechnologyId)?.name}</Badge>
+            )}
           </div>
           <div className="text-xs text-text-muted">
             Pesos: {categories.map((c) => `${c.code} ${c.weight}%`).join(" · ")}
@@ -110,9 +135,9 @@ export default async function DashboardPage({
         </div>
         {summary.length === 0 ? (
           <EmptyState>
-            {selectedTechArea === "ALL"
+            {selectedTechArea === "ALL" && selectedTechnologyId === "ALL"
               ? "No hay partners activos todavía."
-              : `No hay partners activos en el área de ${TECH_AREA_LABEL[selectedTechArea]}.`}
+              : "No hay partners activos que cumplan los filtros seleccionados."}
           </EmptyState>
         ) : (
           <div className="overflow-x-auto">
@@ -120,6 +145,8 @@ export default async function DashboardPage({
               <thead>
                 <tr className="text-left text-text-muted border-b border-[var(--border)]">
                   <th className="py-2 font-medium">Partner</th>
+                  <th className="py-2 font-medium">Categoría</th>
+                  <th className="py-2 font-medium">Tecnología</th>
                   <th className="py-2 font-medium">Puntuación global</th>
                   <th className="py-2 font-medium">Respuestas</th>
                   <th className="py-2 font-medium">Legal</th>
@@ -133,6 +160,23 @@ export default async function DashboardPage({
                   .map((p) => (
                     <tr key={p.partnerId} className="border-b border-[var(--border)] last:border-0">
                       <td className="py-3 font-medium text-text-primary">{p.name}</td>
+                      <td className="py-3">
+                        <Badge>{CATEGORY_LABEL[p.category]}</Badge>
+                      </td>
+                      <td className="py-3">
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {p.techAreas.map((a) => (
+                            <Badge key={a} tone="brand">
+                              {TECH_AREA_LABEL[a]}
+                            </Badge>
+                          ))}
+                          {p.technologies.length === 0 ? (
+                            <span className="text-text-muted text-xs">—</span>
+                          ) : (
+                            p.technologies.map((t) => <Badge key={t}>{t}</Badge>)
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3">
                         <ScoreBadge score={p.overall} />
                       </td>

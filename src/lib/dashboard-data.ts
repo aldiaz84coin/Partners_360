@@ -113,16 +113,27 @@ export async function getPartnerTrend(partnerId: string): Promise<TrendPoint[]> 
 export type PartnerSummary = {
   partnerId: string;
   name: string;
+  category: string;
+  techAreas: TechArea[];
+  technologies: string[];
   overall: number | null;
   responded: number;
   expected: number;
   expiringDocsCount: number;
 };
 
-export async function getAllPartnersSummary(periodId: string, techArea?: TechArea): Promise<PartnerSummary[]> {
+export async function getAllPartnersSummary(
+  periodId: string,
+  filters?: { techArea?: TechArea; technologyId?: string }
+): Promise<PartnerSummary[]> {
   const partners = await prisma.partner.findMany({
-    where: { active: true, ...(techArea ? { techAreas: { has: techArea } } : {}) },
+    where: {
+      active: true,
+      ...(filters?.techArea ? { techAreas: { has: filters.techArea } } : {}),
+      ...(filters?.technologyId ? { technologies: { some: { id: filters.technologyId } } } : {}),
+    },
     orderBy: { name: "asc" },
+    include: { technologies: { select: { name: true }, orderBy: { order: "asc" } } },
   });
   const categories = await getCategoryWeights();
 
@@ -142,6 +153,9 @@ export async function getAllPartnersSummary(periodId: string, techArea?: TechAre
     results.push({
       partnerId: partner.id,
       name: partner.name,
+      category: partner.category,
+      techAreas: partner.techAreas,
+      technologies: partner.technologies.map((t) => t.name),
       overall: overallScore(categoryScores),
       responded: evaluations.length,
       expected,
